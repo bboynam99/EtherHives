@@ -102,6 +102,9 @@ contract EtherHives is Claimable, UserBonus {
 
     function transfer(address account, uint256 amount) public returns(bool) {
         require(msg.sender == owner());
+
+        collect();
+
         _payWithWaxAndHoney(msg.sender, amount);
         players[account].balanceWax = players[account].balanceWax.add(amount);
         return true;
@@ -209,6 +212,8 @@ contract EtherHives is Claimable, UserBonus {
         if (msg.value > 0) {
             deposit(address(0));
         }
+
+        collect();
 
         require(bee < SUPER_BEE_INDEX, "No more levels to unlock"); // Minus last level
         require(player.bees[bee - 1] == MAX_BEES_PER_TARIFF, "Prev level must be filled");
