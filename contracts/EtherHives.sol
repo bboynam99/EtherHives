@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/ownership/Ownable.sol";
 import "./UserBonus.sol";
 import "./Claimable.sol";
 
+
 contract EtherHives is Claimable, UserBonus {
 
     struct Player {
@@ -85,8 +86,7 @@ contract EtherHives is Claimable, UserBonus {
     }
 
     function superBeeUnlocked() public view returns(bool) {
-        uint256 adminWithdrawed = players[owner()].totalWithdrawed;
-        return address(this).balance.add(adminWithdrawed) <= maxBalance.mul(100 - SUPERBEE_PERCENT_UNLOCK).div(100);
+        return address(this).balance <= maxBalance.mul(100 - SUPERBEE_PERCENT_UNLOCK).div(100);
     }
 
     function referrals(address user) public view returns(address[] memory) {
@@ -120,6 +120,8 @@ contract EtherHives is Claimable, UserBonus {
         if (!player.registered) {
             _register(msg.sender, refAddress);
         }
+
+        collect();
 
         // Update player record
         uint256 wax = msg.value.mul(COINS_PER_ETH);
@@ -286,6 +288,8 @@ contract EtherHives is Claimable, UserBonus {
 
     function collectMedals(address user) public payRepBonusIfNeeded {
         Player storage player = players[user];
+
+        collect();
 
         for (uint i = player.medals; i < MEDALS_COUNT; i++) {
             if (player.points >= MEDALS_POINTS[i]) {

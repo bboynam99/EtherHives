@@ -30,6 +30,10 @@ contract UserBonus {
         _;
     }
 
+    constructor() public {
+        bonus.lastPaidTime = block.timestamp;
+    }
+
     function payRepresentativeBonus() public {
         while (bonus.numberOfUsers > 0 && bonus.lastPaidTime.add(BONUS_TIME) <= block.timestamp) {
             uint256 reward = address(this).balance.mul(BONUS_PERCENTS_PER_WEEK).div(100);
@@ -61,10 +65,6 @@ contract UserBonus {
 
     function _addUserToBonus(address user) internal payRepBonusIfNeeded {
         require(!bonus.userRegistered[msg.sender], "User already registered for bonus");
-
-        if (bonus.numberOfUsers == 0) {
-            bonus.lastPaidTime = block.timestamp;
-        }
 
         bonus.userRegistered[user] = true;
         bonus.userPaid[user] = bonus.threadPaid;
