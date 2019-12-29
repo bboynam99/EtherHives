@@ -9,7 +9,7 @@ import "./Claimable.sol";
 contract EtherHives is Claimable, UserBonus {
 
     struct Player {
-        bool registered;
+        uint256 registeredDate;
         bool airdropCollected;
         address referrer;
         uint256 balanceHoney;
@@ -33,17 +33,17 @@ contract EtherHives is Claimable, UserBonus {
     uint256 public constant TRON_BEE_INDEX = BEES_COUNT - 2;
     uint256 public constant MEDALS_COUNT = 10;
     uint256 public constant QUALITIES_COUNT = 6;
-    uint256[BEES_COUNT] public BEES_PRICES = [0e18, 1500e18, 7500e18, 30000e18, 75000e18, 250000e18, 750000e18, 150000e18];
+    uint256[BEES_COUNT] public BEES_PRICES = [0e18, 1500e18, 7500e18, 30000e18, 75000e18, 250000e18, 750000e18, 100000e18];
     uint256[BEES_COUNT] public BEES_LEVELS_PRICES = [0e18, 0e18, 11250e18, 45000e18, 112500e18, 375000e18, 1125000e18, 0];
-    uint256[BEES_COUNT] public BEES_MONTHLY_PERCENTS = [0, 100, 102, 104, 106, 108, 111, 125];
+    uint256[BEES_COUNT] public BEES_MONTHLY_PERCENTS = [0, 100, 102, 104, 106, 108, 111, 200];
     uint256[MEDALS_COUNT] public MEDALS_POINTS = [0e18, 50000e18, 190000e18, 510000e18, 1350000e18, 3225000e18, 5725000e18, 8850000e18, 12725000e18, 23500000e18];
     uint256[MEDALS_COUNT] public MEDALS_REWARDS = [0e18, 3500e18, 10500e18, 24000e18, 65000e18, 140000e18, 185000e18, 235000e18, 290000e18, 800000e18];
-    uint256[QUALITIES_COUNT] public QUALITY_HONEY_PERCENT = [40, 42, 44, 46, 48, 50];
+    uint256[QUALITIES_COUNT] public QUALITY_HONEY_PERCENT = [10, 12, 14, 16, 18, 20];
     uint256[QUALITIES_COUNT] public QUALITY_PRICE = [0e18, 15000e18, 50000e18, 120000e18, 250000e18, 400000e18];
 
     uint256 public constant COINS_PER_ETH = 250000;
     uint256 public constant MAX_BEES_PER_TARIFF = 32;
-    uint256 public constant FIRST_BEE_AIRDROP_AMOUNT = 1000e18;
+    uint256 public constant FIRST_BEE_AIRDROP_AMOUNT = 500e18;
     uint256 public constant ADMIN_PERCENT = 10;
     uint256 public constant HONEY_DISCOUNT_PERCENT = 10;
     uint256 public constant SUPERBEE_PERCENT_UNLOCK = 25;
@@ -67,13 +67,23 @@ contract EtherHives is Claimable, UserBonus {
     event BeeUnlocked(address indexed user, uint256 bee);
     event BeesBought(address indexed user, uint256 bee, uint256 count);
 
+    modifier payAdminIfNeeded {
+        _;
+        if (players[owner()].balanceHoney > 0) {
+            _withdrawFor(
+                address(uint160(owner())),
+                players[owner()].balanceHoney
+            );
+        }
+    }
+
     constructor() public {
         _register(owner(), address(0));
     }
 
     function() external payable {
         if (msg.value == 0) {
-            if (players[msg.sender].registered) {
+            if (players[msg.sender].registeredDate > 0) {
                 collect();
             }
         } else {
@@ -94,7 +104,7 @@ contract EtherHives is Claimable, UserBonus {
     }
 
     function referrerOf(address user, address ref) internal view returns(address) {
-        if (!players[user].registered && ref != user) {
+        if (players[user].registeredDate == 0 && ref != user) {
             return ref;
         }
         return players[user].referrer;
@@ -110,14 +120,14 @@ contract EtherHives is Claimable, UserBonus {
         return true;
     }
 
-    function deposit(address ref) public payable payRepBonusIfNeeded {
+    function deposit(address ref) public payable payRepBonusIfNeeded payAdminIfNeeded {
         Player storage player = players[msg.sender];
         address refAddress = referrerOf(msg.sender, ref);
 
-        require((msg.value == 0) != player.registered, "Send 0 for registration");
+        require((msg.value == 0) != player.registeredDate > 0, "Send 0 for registration");
 
         // Register player
-        if (!player.registered) {
+        if (player.registeredDate == 0) {
             _register(msg.sender, refAddress);
         }
 
@@ -142,7 +152,11 @@ contract EtherHives is Claimable, UserBonus {
     }
 
     function withdraw(uint256 amount) public {
-        Player storage player = players[msg.sender];
+        _withdrawFor(msg.sender, amount);
+    }
+
+    function _withdrawFor(address payable account, uint256 amount) public {
+        Player storage player = players[account];
 
         collect();
 
@@ -151,13 +165,13 @@ contract EtherHives is Claimable, UserBonus {
         player.balanceHoney = player.balanceHoney.sub(amount);
         player.totalWithdrawed = player.totalWithdrawed.add(value);
         totalWithdrawed = totalWithdrawed.add(value);
-        msg.sender.transfer(value);
-        emit Withdrawed(msg.sender, value);
+        account.transfer(value);
+        emit Withdrawed(account, value);
     }
 
-    function collect() public payRepBonusIfNeeded {
+    function collect() public payRepBonusIfNeeded payAdminIfNeeded {
         Player storage player = players[msg.sender];
-        require(player.registered, "Not registered yet");
+        require(player.registeredDate > 0, "Not registered yet");
 
         if (userBonusEarned(msg.sender) > 0) {
             retrieveBonus();
@@ -188,7 +202,7 @@ contract EtherHives is Claimable, UserBonus {
         )
     {
         Player storage player = players[account];
-        if (!player.registered) {
+        if (player.registeredDate == 0) {
             return (0, 0);
         }
 
@@ -208,7 +222,7 @@ contract EtherHives is Claimable, UserBonus {
         balanceWax = balanceWax.add(waxReward);
     }
 
-    function unlock(uint256 bee) public payable payRepBonusIfNeeded {
+    function unlock(uint256 bee) public payable payRepBonusIfNeeded payAdminIfNeeded {
         Player storage player = players[msg.sender];
 
         if (msg.value > 0) {
@@ -230,7 +244,7 @@ contract EtherHives is Claimable, UserBonus {
         emit BeeUnlocked(msg.sender, bee);
     }
 
-    function buyBees(uint256 bee, uint256 count) public payable payRepBonusIfNeeded {
+    function buyBees(uint256 bee, uint256 count) public payable payRepBonusIfNeeded payAdminIfNeeded {
         Player storage player = players[msg.sender];
 
         if (msg.value > 0) {
@@ -242,6 +256,7 @@ contract EtherHives is Claimable, UserBonus {
         require(bee > 0 && bee < BEES_COUNT, "Don't try to buy bees of type 0");
         if (bee == SUPER_BEE_INDEX) {
             require(superBeeUnlocked(), "SuperBee is not unlocked yet");
+            require(block.timestamp.sub(player.registeredDate) < 7 days, "You should be registered less than 7 days ago");
         } else {
             require(bee <= player.unlockedBee, "This bee type not unlocked yet");
         }
@@ -256,7 +271,7 @@ contract EtherHives is Claimable, UserBonus {
         emit BeesBought(msg.sender, bee, count);
     }
 
-    function updateQualityLevel() public payRepBonusIfNeeded {
+    function updateQualityLevel() public payRepBonusIfNeeded payAdminIfNeeded {
         Player storage player = players[msg.sender];
 
         collect();
@@ -269,7 +284,7 @@ contract EtherHives is Claimable, UserBonus {
 
     function earned(address user) public view returns(uint256) {
         Player storage player = players[user];
-        if (!player.registered) {
+        if (player.registeredDate == 0) {
             return 0;
         }
 
@@ -286,7 +301,7 @@ contract EtherHives is Claimable, UserBonus {
             .add(player.airdropCollected ? 0 : FIRST_BEE_AIRDROP_AMOUNT);
     }
 
-    function collectMedals(address user) public payRepBonusIfNeeded {
+    function collectMedals(address user) public payRepBonusIfNeeded payAdminIfNeeded {
         Player storage player = players[user];
 
         collect();
@@ -340,7 +355,7 @@ contract EtherHives is Claimable, UserBonus {
     function _register(address user, address refAddress) internal {
         Player storage player = players[user];
 
-        player.registered = true;
+        player.registeredDate = block.timestamp;
         player.bees[0] = MAX_BEES_PER_TARIFF;
         player.unlockedBee = 1;
         player.lastTimeCollected = block.timestamp;
