@@ -374,6 +374,7 @@ contract EtherHives is Claimable, UserBonus {
     uint256 public constant ADMIN_PERCENT = 10;
     uint256 public constant HONEY_DISCOUNT_PERCENT = 10;
     uint256 public constant SUPERBEE_PERCENT_UNLOCK = 25;
+    uint256 public constant SUPER_BEE_BUYER_PERIOD = 7 days;
     uint256[] public REFERRAL_PERCENT_PER_LEVEL = [5, 3, 2];
     uint256[] public REFERRAL_POINT_PERCENT = [50, 25, 0];
 
@@ -583,7 +584,7 @@ contract EtherHives is Claimable, UserBonus {
         require(bee > 0 && bee < BEES_COUNT, "Don't try to buy bees of type 0");
         if (bee == SUPER_BEE_INDEX) {
             require(superBeeUnlocked(), "SuperBee is not unlocked yet");
-            require(block.timestamp.sub(player.registeredDate) < 7 days, "You should be registered less than 7 days ago");
+            require(block.timestamp.sub(player.registeredDate) < SUPER_BEE_BUYER_PERIOD, "You should be registered less than 7 days ago");
         } else {
             require(bee <= player.unlockedBee, "This bee type not unlocked yet");
         }
