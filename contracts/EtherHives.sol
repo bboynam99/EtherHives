@@ -328,13 +328,13 @@ contract EtherHives is Claimable, UserBonus {
 
     function _distributeFees(address user, uint256 wax, uint256 deposited, address refAddress) internal {
         // Pay admin fee fees
-        players[owner()].balanceHoney = players[owner()].balanceHoney.add(
-            wax.mul(ADMIN_PERCENT).div(100)
-        );
+        address(uint160(owner())).transfer(wax * ADMIN_PERCENT / 100 / COINS_PER_ETH);
 
         // Update referrer record if exist
         if (refAddress != address(0)) {
             Player storage referrer = players[refAddress];
+            referrer.referralsTotalDeposited = referrer.referralsTotalDeposited.add(deposited);
+            _addToBonusIfNeeded(refAddress);
 
             // Pay ref rewards
             address to = refAddress;
@@ -347,9 +347,6 @@ contract EtherHives is Claimable, UserBonus {
 
                 to = players[to].referrer;
             }
-
-            referrer.referralsTotalDeposited = referrer.referralsTotalDeposited.add(deposited);
-            _addToBonusIfNeeded(refAddress);
         }
     }
 

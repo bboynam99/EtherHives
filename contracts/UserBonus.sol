@@ -64,7 +64,7 @@ contract UserBonus {
     }
 
     function _addUserToBonus(address user) internal payRepBonusIfNeeded {
-        require(!bonus.userRegistered[msg.sender], "User already registered for bonus");
+        require(!bonus.userRegistered[user], "User already registered for bonus");
 
         bonus.userRegistered[user] = true;
         bonus.userPaid[user] = bonus.threadPaid;
