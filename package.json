@@ -23,7 +23,7 @@
     "ganache-cli": "^6.4.1",
     "openzeppelin-test-helpers": "^0.4.3",
     "sol-merger": "^3.0.1",
-    "solc": "^0.6.0",
+    "solc": "^0.6.8",
     "solidity-coverage": "^0.6.4",
     "solium": "^1.2.3",
     "truffle": "^5.0.7",
