@@ -1,6 +1,8 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
 
-import "@openzeppelin/contracts/ownership/Ownable.sol";
+pragma solidity ^0.6.0;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 
 contract Claimable is Ownable {
@@ -12,16 +14,16 @@ contract Claimable is Ownable {
         _;
     }
 
-    function renounceOwnership() public onlyOwner {
+    function renounceOwnership() public override(Ownable) onlyOwner {
         revert();
     }
 
-    function transferOwnership(address newOwner) public onlyOwner {
+    function transferOwnership(address newOwner) public override(Ownable) onlyOwner {
         pendingOwner = newOwner;
     }
 
-    function claimOwnership() public onlyPendingOwner {
-        _transferOwnership(pendingOwner);
+    function claimOwnership() public virtual onlyPendingOwner {
+        transferOwnership(pendingOwner);
         delete pendingOwner;
     }
 }

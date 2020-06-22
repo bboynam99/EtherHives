@@ -1,7 +1,9 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/math/Math.sol";
-import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./UserBonus.sol";
 import "./Claimable.sol";
 
@@ -82,7 +84,7 @@ contract EtherHives is Claimable, UserBonus {
         _register(owner(), address(0));
     }
 
-    function() external payable {
+    receive() external payable {
         if (msg.value == 0) {
             if (players[msg.sender].registeredDate > 0) {
                 collect();
@@ -316,12 +318,12 @@ contract EtherHives is Claimable, UserBonus {
         }
     }
 
-    function retrieveBonus() public {
+    function retrieveBonus() public override(UserBonus) {
         totalWithdrawed = totalWithdrawed.add(userBonusEarned(msg.sender));
         super.retrieveBonus();
     }
 
-    function claimOwnership() public {
+    function claimOwnership() public override(Claimable) {
         super.claimOwnership();
         _register(owner(), address(0));
     }

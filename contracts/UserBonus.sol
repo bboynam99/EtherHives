@@ -1,8 +1,10 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/math/Math.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 
 contract UserBonus {
@@ -55,7 +57,7 @@ contract UserBonus {
         return bonus.userRegistered[user] ? bonus.threadPaid.sub(bonus.userPaid[user]) : 0;
     }
 
-    function retrieveBonus() public payRepBonusIfNeeded {
+    function retrieveBonus() public virtual payRepBonusIfNeeded {
         require(bonus.userRegistered[msg.sender], "User not registered for bonus");
 
         uint256 amount = Math.min(address(this).balance, userBonusEarned(msg.sender));
