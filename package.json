@@ -8,7 +8,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@openzeppelin/contracts": "^2.3.0"
+    "@openzeppelin/contracts": "^3.0.1"
   },
   "devDependencies": {
     "chai": "^4.2.0",
@@ -22,7 +22,8 @@
     "eth-gas-reporter": "^0.2.11",
     "ganache-cli": "^6.4.1",
     "openzeppelin-test-helpers": "^0.4.3",
-    "solc": "^0.5.11",
+    "sol-merger": "^3.0.1",
+    "solc": "^0.6.0",
     "solidity-coverage": "^0.6.4",
     "solium": "^1.2.3",
     "truffle": "^5.0.7",
@@ -37,6 +38,7 @@
     "lint:sol:fix": "solium -d . --fix",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
-    "dist": "truffle-flattener ./contracts/EtherHives.sol > EtherHives.full.sol && solcjs --bin --abi --optimize EtherHives.full.sol && mv EtherHives_full_sol_EtherHives.bin EtherHives.full.bin && mv EtherHives_full_sol_EtherHives.abi EtherHives.full.abi && rm *_sol_*"
+    "dist": "truffle-flattener ./contracts/EtherHives.sol > EtherHives.full.sol && solcjs --bin --abi --optimize EtherHives.full.sol && mv EtherHives_full_sol_EtherHives.bin EtherHives.full.bin && mv EtherHives_full_sol_EtherHives.abi EtherHives.full.abi && rm *_sol_*",
+    "build": "sol-merger -c \"./contracts/*.sol\" ./build/dist"
   }
 }
