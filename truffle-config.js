@@ -19,14 +19,15 @@ module.exports = {
   },
   compilers: {
     solc: {
-      version: '0.5.11',
-      settings: {
+      version: "0.6.8", // Fetch exact version from solc-bin (default: truffle's version)
+      settings: { // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
           enabled: true,
-          runs: 200,
-        }
+          runs: 0
+        },
+        evmVersion: "istanbul"
       }
-    },
+    }
   },
   mocha: { // https://github.com/cgewecke/eth-gas-reporter
     reporter: 'eth-gas-reporter',
