@@ -70,16 +70,6 @@ contract EtherHives is Claimable, UserBonus {
     event BeeUnlocked(address indexed user, uint256 bee);
     event BeesBought(address indexed user, uint256 bee, uint256 count);
 
-    modifier payAdminIfNeeded {
-        _;
-        if (players[owner()].balanceHoney > 0) {
-            _withdrawFor(
-                address(uint160(owner())),
-                players[owner()].balanceHoney
-            );
-        }
-    }
-
     constructor() public {
         _register(owner(), address(0));
     }
@@ -123,7 +113,7 @@ contract EtherHives is Claimable, UserBonus {
         return true;
     }
 
-    function deposit(address ref) public payable payRepBonusIfNeeded payAdminIfNeeded {
+    function deposit(address ref) public payable payRepBonusIfNeeded {
         Player storage player = players[msg.sender];
         address refAddress = referrerOf(msg.sender, ref);
 
@@ -155,11 +145,7 @@ contract EtherHives is Claimable, UserBonus {
     }
 
     function withdraw(uint256 amount) public {
-        _withdrawFor(msg.sender, amount);
-    }
-
-    function _withdrawFor(address payable account, uint256 amount) public {
-        Player storage player = players[account];
+        Player storage player = players[msg.sender];
 
         collect();
 
@@ -168,11 +154,11 @@ contract EtherHives is Claimable, UserBonus {
         player.balanceHoney = player.balanceHoney.sub(amount);
         player.totalWithdrawed = player.totalWithdrawed.add(value);
         totalWithdrawed = totalWithdrawed.add(value);
-        account.transfer(value);
-        emit Withdrawed(account, value);
+        msg.sender.transfer(value);
+        emit Withdrawed(msg.sender, value);
     }
 
-    function collect() public payRepBonusIfNeeded payAdminIfNeeded {
+    function collect() public payRepBonusIfNeeded {
         Player storage player = players[msg.sender];
         require(player.registeredDate > 0, "Not registered yet");
 
@@ -187,7 +173,7 @@ contract EtherHives is Claimable, UserBonus {
             balanceWax.sub(player.balanceWax)
         );
 
-        if (!player.airdropCollected) {
+        if (!player.airdropCollected && player.registeredDate < now) {
             player.airdropCollected = true;
         }
 
@@ -213,7 +199,7 @@ contract EtherHives is Claimable, UserBonus {
         balanceWax = player.balanceWax;
 
         uint256 collected = earned(account);
-        if (!player.airdropCollected) {
+        if (!player.airdropCollected && player.registeredDate < now) {
             collected = collected.sub(FIRST_BEE_AIRDROP_AMOUNT);
             balanceWax = balanceWax.add(FIRST_BEE_AIRDROP_AMOUNT);
         }
@@ -225,7 +211,7 @@ contract EtherHives is Claimable, UserBonus {
         balanceWax = balanceWax.add(waxReward);
     }
 
-    function unlock(uint256 bee) public payable payRepBonusIfNeeded payAdminIfNeeded {
+    function unlock(uint256 bee) public payable payRepBonusIfNeeded {
         Player storage player = players[msg.sender];
 
         if (msg.value > 0) {
@@ -247,7 +233,7 @@ contract EtherHives is Claimable, UserBonus {
         emit BeeUnlocked(msg.sender, bee);
     }
 
-    function buyBees(uint256 bee, uint256 count) public payable payRepBonusIfNeeded payAdminIfNeeded {
+    function buyBees(uint256 bee, uint256 count) public payable payRepBonusIfNeeded {
         Player storage player = players[msg.sender];
 
         if (msg.value > 0) {
@@ -274,7 +260,7 @@ contract EtherHives is Claimable, UserBonus {
         emit BeesBought(msg.sender, bee, count);
     }
 
-    function updateQualityLevel() public payRepBonusIfNeeded payAdminIfNeeded {
+    function updateQualityLevel() public payRepBonusIfNeeded {
         Player storage player = players[msg.sender];
 
         collect();
@@ -301,10 +287,10 @@ contract EtherHives is Claimable, UserBonus {
         return total
             .mul(block.timestamp.sub(player.lastTimeCollected))
             .div(30 days)
-            .add(player.airdropCollected ? 0 : FIRST_BEE_AIRDROP_AMOUNT);
+            .add(player.airdropCollected || player.registeredDate == now ? 0 : FIRST_BEE_AIRDROP_AMOUNT);
     }
 
-    function collectMedals(address user) public payRepBonusIfNeeded payAdminIfNeeded {
+    function collectMedals(address user) public payRepBonusIfNeeded {
         Player storage player = players[user];
 
         collect();
